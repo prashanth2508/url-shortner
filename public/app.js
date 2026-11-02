@@ -70,11 +70,10 @@ function setupEventListeners() {
   // Update prefix on domain select change
   if (domainSelect && aliasPrefix) {
     const updatePrefix = () => {
-      const val = domainSelect.value;
-      const hostStr = (val === 'CURRENT_ORIGIN' || !val) 
-        ? window.location.host 
-        : val.replace(/^https?:\/\//, '');
-      aliasPrefix.textContent = hostStr + '/';
+      aliasPrefix.textContent = window.location.host + '/';
+      if (domainSelect && domainSelect.options && domainSelect.options.length > 0) {
+        domainSelect.options[0].textContent = `Live Domain (${window.location.host})`;
+      }
     };
     domainSelect.addEventListener('change', updatePrefix);
     updatePrefix();
@@ -167,17 +166,20 @@ async function handleShortenSubmit(e) {
  * Display Shortened Result in Card
  */
 function displayResult(item) {
-  currentShortUrl = item.shortUrl;
+  // Always ensure the live URL is fully qualified and functional
+  const realUrl = (item.shortUrl && item.shortUrl.startsWith('http') && !item.shortUrl.includes('aura.link') && !item.shortUrl.includes('localhost:3000'))
+    ? item.shortUrl
+    : `${window.location.origin}/${item.shortCode}`;
+
+  currentShortUrl = realUrl;
   currentShortCode = item.shortCode;
 
-  // Use the live URL directly if on same host, or relative path /code so it ALWAYS redirects on Render
-  const isCurrentOrigin = item.shortUrl.startsWith(window.location.origin);
-  shortUrlDisplay.href = isCurrentOrigin ? item.shortUrl : `/${item.shortCode}`;
-  shortUrlDisplay.textContent = item.shortUrl;
+  shortUrlDisplay.href = realUrl;
+  shortUrlDisplay.textContent = realUrl;
   longUrlSubDisplay.textContent = item.longUrl;
 
-  // Test redirect button ALWAYS points to the working live relative route
-  testRedirectBtn.href = `/${item.shortCode}`;
+  // Test redirect button points directly to the live URL
+  testRedirectBtn.href = realUrl;
 
   if (item.expiresAt) {
     const expiryDate = new Date(item.expiresAt).toLocaleString(undefined, {

@@ -93,20 +93,16 @@
 
           <div id="advancedOptions" class="advanced-options-grid hidden">
             <div class="option-field">
-              <label for="domainSelect">Branded Domain</label>
+              <label for="domainSelect">Short URL Domain</label>
               <select id="domainSelect">
-                <option value="CURRENT_ORIGIN" selected>Live Domain (Recommended)</option>
-                <option value="https://aura.link">aura.link (Branded alias)</option>
-                <option value="https://aura.sh">aura.sh (Ultra-short)</option>
-                <option value="https://s.io">s.io (Tech)</option>
-                <option value="https://bit.ly">bit.ly (Enterprise)</option>
+                <option value="CURRENT_ORIGIN" selected>Live Domain (Auto-detected)</option>
               </select>
             </div>
 
             <div class="option-field">
               <label for="customAliasInput">Custom Slug (Optional)</label>
               <div class="alias-input-wrapper">
-                <span class="alias-prefix" id="aliasPrefix">aura.link/</span>
+                <span class="alias-prefix" id="aliasPrefix">/</span>
                 <input 
                   type="text" 
                   id="customAliasInput" 

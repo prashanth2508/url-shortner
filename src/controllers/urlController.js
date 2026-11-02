@@ -10,8 +10,8 @@ export class UrlController {
   static async shorten(req, res) {
     try {
       const { longUrl, customAlias, ttlSeconds, domain } = req.body;
-      const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
-      const host = req.get('host') || `localhost:${config.port}`;
+      const protocol = req.headers['x-forwarded-proto'] || (req.get('host')?.includes('render.com') ? 'https' : req.protocol) || 'https';
+      const host = req.headers['x-forwarded-host'] || req.get('host') || 'url-shortner-yvf6.onrender.com';
       const requestOrigin = `${protocol}://${host}`;
 
       const result = await urlService.shortenUrl({

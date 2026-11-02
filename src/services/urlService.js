@@ -85,20 +85,22 @@ export class UrlService {
     });
 
     // Default to live host origin (e.g. https://url-shortner-yvf6.onrender.com)
-    const liveOrigin = (requestOrigin && typeof requestOrigin === 'string')
+    let liveOrigin = (requestOrigin && typeof requestOrigin === 'string' && !requestOrigin.includes('localhost:3000'))
       ? requestOrigin.replace(/\/$/, '')
       : config.baseUrl;
 
-    let activeDomain;
-    if (domain && typeof domain === 'string' && domain.trim() && domain !== 'CURRENT_ORIGIN') {
+    // Filter out dummy/mock domains so the shortened link ALWAYS works and NEVER 404s
+    const mockDomains = new Set(['https://aura.link', 'https://aura.sh', 'https://s.io', 'https://bit.ly', 'CURRENT_ORIGIN']);
+    let activeDomain = liveOrigin;
+    if (domain && typeof domain === 'string' && domain.trim() && !mockDomains.has(domain.trim())) {
       activeDomain = domain.trim().replace(/\/$/, '');
-    } else {
-      activeDomain = liveOrigin;
     }
+
+    const shortUrl = `${activeDomain}/${record.shortCode}`;
 
     return {
       shortCode: record.shortCode,
-      shortUrl: `${activeDomain}/${record.shortCode}`,
+      shortUrl,
       liveUrl: `${liveOrigin}/${record.shortCode}`,
       localUrl: `/${record.shortCode}`,
       domain: activeDomain,
