@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AuraURL — High-Throughput Distributed URL Shortener</title>
+  <meta name="description" content="A distributed, low-latency URL shortener with Base62 encoding, custom aliases, click analytics, and high availability.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Header / Nav -->
+  <header class="header">
+    <div class="container nav-content">
+      <div class="logo">
+        <div class="logo-mark">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+          </svg>
+        </div>
+        <span class="logo-title">Aura<span>URL</span></span>
+        <span class="badge-distributed">Distributed v1.0</span>
+      </div>
+
+      <div class="nav-right">
+        <div class="theme-picker" id="themePicker" title="Theme Palette">
+          <button class="theme-dot active" data-theme="cobalt" title="Cobalt Slate"></button>
+          <button class="theme-dot" data-theme="emerald" title="Emerald Mint"></button>
+          <button class="theme-dot" data-theme="amber" title="Warm Amber"></button>
+          <button class="theme-dot" data-theme="mono" title="Monochrome"></button>
+        </div>
+        <div class="node-indicator" id="nodeStatus">
+          <span class="status-dot"></span>
+          <span class="node-label">Node-01 Active</span>
+        </div>
+        <a href="#analytics-section" class="nav-link">Analytics</a>
+        <a href="#architecture-section" class="nav-link">Architecture</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Hero Section -->
+    <section class="hero-section">
+      <div class="hero-badge">
+        <span class="hero-badge-dot"></span>
+        <span>Base62 • Range ID Generator • &lt;50ms Redirect Latency</span>
+      </div>
+      <h1 class="hero-title">Distributed Short Links.<br><span class="highlight-text">Engineered for Scale.</span></h1>
+      <p class="hero-subtitle">
+        High-throughput URL reduction engine built on 64-bit Base62 encoding, cache-aside read optimization, and real-time click telemetry.
+      </p>
+
+      <!-- URL Shortening Card -->
+      <div class="shortener-card" id="shortenerCard">
+        <form id="shortenForm" class="shorten-form">
+          <div class="input-primary-group">
+            <div class="input-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+              </svg>
+            </div>
+            <input 
+              type="url" 
+              id="longUrlInput" 
+              placeholder="Paste your long destination URL (e.g. https://github.com/...)" 
+              required 
+              autocomplete="off"
+            />
+            <button type="submit" id="submitBtn" class="btn-primary">
+              <span class="btn-text">Shorten URL</span>
+              <svg class="btn-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Advanced Toggle & Options -->
+          <div class="options-toggle-row">
+            <button type="button" id="toggleOptionsBtn" class="options-toggle-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 15l-5-5h10l-5 5z"/>
+              </svg>
+              <span>Advanced Settings (Custom Alias & Expiry TTL)</span>
+            </button>
+          </div>
+
+          <div id="advancedOptions" class="advanced-options-grid hidden">
+            <div class="option-field">
+              <label for="domainSelect">Branded Domain</label>
+              <select id="domainSelect">
+                <option value="https://aura.link">aura.link (Recommended)</option>
+                <option value="https://aura.sh">aura.sh (Ultra-short)</option>
+                <option value="https://s.io">s.io (Tech)</option>
+                <option value="https://bit.ly">bit.ly (Enterprise)</option>
+              </select>
+            </div>
+
+            <div class="option-field">
+              <label for="customAliasInput">Custom Slug (Optional)</label>
+              <div class="alias-input-wrapper">
+                <span class="alias-prefix" id="aliasPrefix">aura.link/</span>
+                <input 
+                  type="text" 
+                  id="customAliasInput" 
+                  placeholder="custom-slug" 
+                  pattern="[a-zA-Z0-9_-]{3,30}"
+                  title="3-30 alphanumeric, hyphen or underscore"
+                />
+              </div>
+            </div>
+
+            <div class="option-field">
+              <label for="ttlSelect">Expiration (TTL)</label>
+              <select id="ttlSelect">
+                <option value="0">Never Expires (Permanent)</option>
+                <option value="3600">1 Hour (Ephemeral test)</option>
+                <option value="86400">24 Hours</option>
+                <option value="604800">7 Days</option>
+                <option value="2592000">30 Days</option>
+              </select>
+            </div>
+          </div>
+        </form>
+
+        <!-- Dynamic Feedback Message -->
+        <div id="feedbackMessage" class="feedback-msg hidden"></div>
+
+        <!-- Result Card (Appears after creation) -->
+        <div id="resultCard" class="result-card hidden">
+          <div class="result-header">
+            <div class="result-status">
+              <span class="pulse-ring"></span>
+              <span>Branded Short Link Ready</span>
+            </div>
+            <div class="result-badges">
+              <span class="domain-tag">Production Domain</span>
+              <span id="resultExpiryBadge" class="expiry-badge">No Expiry</span>
+            </div>
+          </div>
+
+          <div class="result-url-box">
+            <div class="result-url-text">
+              <a id="shortUrlDisplay" href="#" target="_blank" rel="noopener noreferrer"></a>
+              <span id="longUrlSubDisplay" class="long-url-sub"></span>
+            </div>
+            <div class="result-actions">
+              <button id="copyBtn" class="btn-secondary" title="Copy to clipboard">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+                <span id="copyBtnText">Copy Link</span>
+              </button>
+              <a id="testRedirectBtn" href="#" target="_blank" class="btn-secondary btn-test-redirect" title="Test 302 Redirection Locally">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                <span>Test Redirect</span>
+              </a>
+              <button id="qrToggleBtn" class="btn-secondary btn-icon-only" title="Show QR Code">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="7" height="7"></rect>
+                  <rect x="14" y="3" width="7" height="7"></rect>
+                  <rect x="14" y="14" width="7" height="7"></rect>
+                  <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Inline QR Code Modal/Drawer -->
+          <div id="qrContainer" class="qr-preview-box hidden">
+            <div class="qr-canvas-wrapper" id="qrCanvasWrapper"></div>
+            <p class="qr-caption">Scan with mobile camera to test instantaneous redirection</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Interactive Workspace Grid (Recent Links + Real-time Analytics) -->
+    <section class="workspace-grid" id="analytics-section">
+      <!-- Left: Recent Shortened URLs -->
+      <div class="panel-card">
+        <div class="panel-header">
+          <div class="panel-title-group">
+            <h2 class="panel-title">Recent Short Links</h2>
+            <span class="panel-sub">Real-time local cluster feed</span>
+          </div>
+          <button id="refreshRecentBtn" class="btn-icon" title="Refresh Links">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <polyline points="1 20 1 14 7 14"></polyline>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div id="recentLinksList" class="recent-links-list">
+          <!-- Populated by JS -->
+          <div class="empty-state">No URLs shortened yet. Create your first link above!</div>
+        </div>
+      </div>
+
+      <!-- Right: Deep Click Analytics Inspector -->
+      <div class="panel-card">
+        <div class="panel-header">
+          <div class="panel-title-group">
+            <h2 class="panel-title">Click Telemetry Inspector</h2>
+            <span class="panel-sub">Real-time event logging & device breakdown</span>
+          </div>
+          <div class="analytics-search">
+            <input type="text" id="analyticsCodeInput" placeholder="Enter short code..." />
+            <button id="inspectBtn" class="btn-sm">Inspect</button>
+          </div>
+        </div>
+
+        <div id="analyticsBody" class="analytics-body">
+          <div class="analytics-placeholder">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <line x1="18" y1="20" x2="18" y2="10"></line>
+              <line x1="12" y1="20" x2="12" y2="4"></line>
+              <line x1="6" y1="20" x2="6" y2="14"></line>
+            </svg>
+            <p>Select any link on the left or enter a short code to view click logs, geographic signals, and device telemetry.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Architecture & Concepts Section -->
+    <section class="architecture-section" id="architecture-section">
+      <div class="section-badge">Distributed System Design</div>
+      <h2 class="section-heading">How This Architecture Achieves Scale</h2>
+      
+      <div class="specs-grid">
+        <div class="spec-card">
+          <div class="spec-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect>
+              <rect x="9" y="9" width="6" height="6"></rect>
+              <line x1="9" y1="1" x2="9" y2="4"></line>
+              <line x1="15" y1="1" x2="15" y2="4"></line>
+              <line x1="9" y1="20" x2="9" y2="23"></line>
+              <line x1="15" y1="20" x2="15" y2="23"></line>
+              <line x1="20" y1="9" x2="23" y2="9"></line>
+              <line x1="20" y1="14" x2="23" y2="14"></line>
+              <line x1="1" y1="9" x2="4" y2="9"></line>
+              <line x1="1" y1="14" x2="4" y2="14"></line>
+            </svg>
+          </div>
+          <h3>Base62 & 64-bit Space</h3>
+          <p>Maps incremental 64-bit integer keys into <code>[0-9a-zA-Z]</code>. A 7-character slug yields <strong>3.52 Trillion</strong> combinations with zero URL encoding overhead.</p>
+          <div class="spec-footer">Capacity: 62⁷ = 3,521,614,606,208</div>
+        </div>
+
+        <div class="spec-card">
+          <div class="spec-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            </svg>
+          </div>
+          <h3>Range Token Allocation</h3>
+          <p>Ticket-server range reservation assigns 100,000 ID chunks per node. Nodes increment locally in-memory, eliminating cross-database synchronization locks on writes.</p>
+          <div class="spec-footer">Zero-Lock Local Batching</div>
+        </div>
+
+        <div class="spec-card">
+          <div class="spec-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+          </div>
+          <h3>HTTP 302 vs 301 Semantics</h3>
+          <p>Uses <strong>302 Found</strong> so downstream browsers hit the edge server every time, capturing real-time click counts and analytics without permanent browser cache bypass.</p>
+          <div class="spec-footer">Exact Analytics Audit Trail</div>
+        </div>
+
+        <div class="spec-card">
+          <div class="spec-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+            </svg>
+          </div>
+          <h3>Fire-and-Forget Analytics</h3>
+          <p>Analytics ingestion runs asynchronously after initiating the HTTP redirect. The client experiences <strong>&lt;50ms response times</strong> without waiting for metrics persistence.</p>
+          <div class="spec-footer">Sub-50ms Redirection SLA</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-content">
+      <div class="footer-left">
+        <span>AuraURL Distributed System Project</span>
+        <span class="footer-divider">•</span>
+        <span>College Viva & System Design Portfolio</span>
+      </div>
+      <div class="footer-right">
+        <span>Engineered with Node.js, SQLite/PostgreSQL & Distributed Principles</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

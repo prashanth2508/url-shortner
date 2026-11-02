@@ -1,0 +1,15 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Environment variables
+.env
+.env.local
+
+# Persistent local database files
+data/*.sqlite*
+
+# Logs & OS artifacts
+*.log
+.DS_Store
+Thumbs.db

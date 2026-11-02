@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: aura-url-shortener
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node src/server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DB_TYPE
+        value: sqlite
+      - key: SHORT_DOMAIN
+        value: https://aura.link
+      - key: REDIRECT_STATUS
+        value: 302
+      - key: RATE_LIMIT_MAX_REQUESTS
+        value: 100

@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: url_shortener_app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - BASE_URL=http://localhost:3000
+      - SHORT_DOMAIN=https://aura.link
+      - DB_TYPE=postgres
+      - DATABASE_URL=postgres://shortener_user:shortener_pass@postgres:5432/url_shortener
+      - REDIS_URL=redis://redis:6379
+      - REDIRECT_STATUS=302
+      - NODE_ID=1
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - shortener_net
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: url_shortener_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: shortener_user
+      POSTGRES_PASSWORD: shortener_pass
+      POSTGRES_DB: url_shortener
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shortener_user -d url_shortener"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shortener_net
+
+  redis:
+    image: redis:7-alpine
+    container_name: url_shortener_redis
+    restart: unless-stopped
+    command: ["redis-server", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    networks:
+      - shortener_net
+
+volumes:
+  pgdata:
+  redisdata:
+
+networks:
+  shortener_net:
+    driver: bridge
