@@ -32,7 +32,7 @@ export class UrlService {
   /**
    * Shorten a URL (with custom alias or Base62 range allocator)
    */
-  async shortenUrl({ longUrl, customAlias, ttlSeconds, domain }) {
+  async shortenUrl({ longUrl, customAlias, ttlSeconds, domain, requestOrigin }) {
     if (!longUrl || typeof longUrl !== 'string') {
       throw { status: 400, message: 'longUrl is required and must be a valid string.' };
     }
@@ -84,14 +84,23 @@ export class UrlService {
       expiresAt
     });
 
-    const activeDomain = (domain && typeof domain === 'string' && domain.trim()) 
-      ? domain.trim().replace(/\/$/, '') 
-      : config.shortDomain;
+    // Default to live host origin (e.g. https://url-shortner-yvf6.onrender.com)
+    const liveOrigin = (requestOrigin && typeof requestOrigin === 'string')
+      ? requestOrigin.replace(/\/$/, '')
+      : config.baseUrl;
+
+    let activeDomain;
+    if (domain && typeof domain === 'string' && domain.trim() && domain !== 'CURRENT_ORIGIN') {
+      activeDomain = domain.trim().replace(/\/$/, '');
+    } else {
+      activeDomain = liveOrigin;
+    }
 
     return {
       shortCode: record.shortCode,
       shortUrl: `${activeDomain}/${record.shortCode}`,
-      localUrl: `${config.baseUrl}/${record.shortCode}`,
+      liveUrl: `${liveOrigin}/${record.shortCode}`,
+      localUrl: `/${record.shortCode}`,
       domain: activeDomain,
       longUrl: record.longUrl,
       isCustom: record.isCustom,

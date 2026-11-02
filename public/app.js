@@ -69,10 +69,15 @@ function initTheme() {
 function setupEventListeners() {
   // Update prefix on domain select change
   if (domainSelect && aliasPrefix) {
-    domainSelect.addEventListener('change', () => {
-      const clean = domainSelect.value.replace(/^https?:\/\//, '');
-      aliasPrefix.textContent = clean + '/';
-    });
+    const updatePrefix = () => {
+      const val = domainSelect.value;
+      const hostStr = (val === 'CURRENT_ORIGIN' || !val) 
+        ? window.location.host 
+        : val.replace(/^https?:\/\//, '');
+      aliasPrefix.textContent = hostStr + '/';
+    };
+    domainSelect.addEventListener('change', updatePrefix);
+    updatePrefix();
   }
 
   // Toggle advanced options
@@ -127,7 +132,11 @@ async function handleShortenSubmit(e) {
   setLoading(true);
 
   try {
-    const domain = domainSelect ? domainSelect.value : 'https://aura.link';
+    let domain = domainSelect ? domainSelect.value : 'CURRENT_ORIGIN';
+    if (domain === 'CURRENT_ORIGIN') {
+      domain = window.location.origin; // Dynamically uses current deployment (e.g. https://url-shortner-yvf6.onrender.com)
+    }
+
     const payload = { longUrl, domain };
     if (customAlias) payload.customAlias = customAlias;
     if (ttlSeconds > 0) payload.ttlSeconds = ttlSeconds;
@@ -158,15 +167,17 @@ async function handleShortenSubmit(e) {
  * Display Shortened Result in Card
  */
 function displayResult(item) {
-  currentShortUrl = item.shortUrl; // e.g. https://aura.link/004c92 (Branded, NO localhost!)
+  currentShortUrl = item.shortUrl;
   currentShortCode = item.shortCode;
 
-  shortUrlDisplay.href = item.localUrl || `/${item.shortCode}`;
+  // Use the live URL directly if on same host, or relative path /code so it ALWAYS redirects on Render
+  const isCurrentOrigin = item.shortUrl.startsWith(window.location.origin);
+  shortUrlDisplay.href = isCurrentOrigin ? item.shortUrl : `/${item.shortCode}`;
   shortUrlDisplay.textContent = item.shortUrl;
   longUrlSubDisplay.textContent = item.longUrl;
 
-  // Real local redirect test
-  testRedirectBtn.href = item.localUrl || `/${item.shortCode}`;
+  // Test redirect button ALWAYS points to the working live relative route
+  testRedirectBtn.href = `/${item.shortCode}`;
 
   if (item.expiresAt) {
     const expiryDate = new Date(item.expiresAt).toLocaleString(undefined, {
@@ -230,10 +241,11 @@ async function loadRecentLinks() {
       return;
     }
 
+    const hostDisplay = window.location.host;
     recentLinksList.innerHTML = data.data.map(item => `
       <div class="recent-link-item" onclick="loadAnalytics('${item.shortCode}')">
         <div class="link-meta">
-          <span class="link-code">aura.link/${escapeHtml(item.shortCode)}</span>
+          <span class="link-code">${escapeHtml(hostDisplay)}/${escapeHtml(item.shortCode)}</span>
           <span class="link-original" title="${escapeHtml(item.longUrl)}">${escapeHtml(item.longUrl)}</span>
         </div>
         <div class="link-badge-group">

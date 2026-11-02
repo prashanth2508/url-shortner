@@ -10,11 +10,16 @@ export class UrlController {
   static async shorten(req, res) {
     try {
       const { longUrl, customAlias, ttlSeconds, domain } = req.body;
+      const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+      const host = req.get('host') || `localhost:${config.port}`;
+      const requestOrigin = `${protocol}://${host}`;
+
       const result = await urlService.shortenUrl({
         longUrl,
         customAlias,
         ttlSeconds,
-        domain
+        domain,
+        requestOrigin
       });
       return res.status(201).json({
         success: true,
